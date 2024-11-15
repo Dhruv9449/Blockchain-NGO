@@ -9,7 +9,7 @@ from transactions.models import Transaction
 class ListNGOsView(APIView):
     def get(self, request):
         ngos = NGO.objects.all()
-        ngos_data = [{"id": ngo.id, "name": ngo.name} for ngo in ngos]
+        ngos_data = [{"id": ngo.id, "name": ngo.name, "logo_url": ngo.logo_url} for ngo in ngos]
         return Response(ngos_data, status=status.HTTP_200_OK)
 
 
