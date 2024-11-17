@@ -8,3 +8,5 @@ psycopg2==2.9.9
 djangorestframework==3.15.2
 web3==7.5.0
 django-cors-headers==4.6.0
+razorpay==1.4.1
+setuptools==75.5.0

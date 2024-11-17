@@ -2,6 +2,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Transaction
+from django.conf import settings
+from rest_framework.permissions import IsAuthenticated
+import razorpay
+from ngos.utils import create_blockchain_record
+from django.db import transaction
+
+client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
 
 class TransactionDetailView(APIView):
@@ -19,3 +26,81 @@ class TransactionDetailView(APIView):
             return Response(transaction_data, status=status.HTTP_200_OK)
         except Transaction.DoesNotExist:
             return Response({"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class CreateOrderView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, ngo_id):
+        try:
+            amount = int(float(request.data.get("amount")) * 100)  # Convert to paise
+
+            order_data = {
+                "amount": amount,
+                "currency": "INR",
+                "receipt": f"order_rcptid_{ngo_id}_{request.user.id}",
+                "notes": {
+                    "ngo_id": ngo_id,
+                    "user_id": request.user.id,
+                },
+            }
+
+            order = client.order.create(data=order_data)
+
+            return Response(
+                {"order_id": order["id"], "amount": amount, "currency": "INR", "key": settings.RAZORPAY_KEY_ID}
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PaymentVerificationView(APIView):
+    @transaction.atomic  # Use Django's transaction management
+    def post(self, request):
+        try:
+            payment_id = request.data.get("razorpay_payment_id")
+            order_id = request.data.get("razorpay_order_id")
+            signature = request.data.get("razorpay_signature")
+
+            # First verify Razorpay payment
+            params_dict = {
+                "razorpay_payment_id": payment_id,
+                "razorpay_order_id": order_id,
+                "razorpay_signature": signature,
+            }
+
+            # Verify signature
+            client.utility.verify_payment_signature(params_dict)
+
+            # Get payment details
+            payment = client.payment.fetch(payment_id)
+            amount = float(payment["amount"]) / 100  # Convert from paise to rupees
+            ngo_id = payment["notes"]["ngo_id"]
+
+            # Create blockchain record first
+            transaction_hash = create_blockchain_record(amount, "donation", ngo_id)
+
+            if not transaction_hash:
+                raise ValueError("Failed to create blockchain record")
+
+            # Only create transaction if blockchain record exists
+            transaction = Transaction.objects.create(
+                ngo_id=ngo_id,
+                user_id=payment["notes"]["user_id"],
+                amount=amount,
+                transaction_type="donation",
+                blockchain_hash=transaction_hash,  # Required field
+                razorpay_order_id=order_id,
+                razorpay_payment_id=payment_id,
+                razorpay_signature=signature,
+                status="completed",
+            )
+
+            return Response(
+                {"status": "success", "transaction_id": transaction.id, "blockchain_hash": transaction_hash}
+            )
+
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": "Payment verification failed: " + str(e)}, status=status.HTTP_400_BAD_REQUEST)

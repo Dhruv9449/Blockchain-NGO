@@ -47,42 +47,42 @@ class Command(BaseCommand):
             "ngo_admin_3": User.objects.get(username="ngo_admin_3"),
         }
 
-        # Sample NGO data
+        # Sample NGO data with high-quality Unsplash images
         ngos = [
             {
                 "name": "Help the Earth",
                 "description": "Environmental NGO",
                 "certificate_url": "https://example.com/certificates/cert123",
                 "admin": admins["ngo_admin_1"],
-                "logo_url": "https://example.com/logos/help-the-earth.png",
+                "logo_url": "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=400&h=400&fit=crop",
             },
             {
                 "name": "Food for All",
                 "description": "Hunger relief NGO",
                 "certificate_url": "https://example.com/certificates/cert456",
                 "admin": admins["ngo_admin_2"],
-                "logo_url": "https://example.com/logos/food-for-all.png",
+                "logo_url": "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=400&h=400&fit=crop",
             },
             {
                 "name": "Healthcare for Everyone",
                 "description": "Healthcare support NGO",
                 "certificate_url": "https://example.com/certificates/cert789",
                 "admin": admins["ngo_admin_3"],
-                "logo_url": "https://example.com/logos/healthcare-for-everyone.png",
+                "logo_url": "https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?w=400&h=400&fit=crop",
             },
             {
                 "name": "Education First",
                 "description": "Educational support NGO",
                 "certificate_url": "https://example.com/certificates/cert101",
                 "admin": admins["ngo_admin_1"],
-                "logo_url": "https://example.com/logos/education-first.png",
+                "logo_url": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=400&fit=crop",
             },
             {
                 "name": "Shelter for All",
                 "description": "Homeless support NGO",
                 "certificate_url": "https://example.com/certificates/cert112",
                 "admin": admins["ngo_admin_2"],
-                "logo_url": "https://example.com/logos/shelter-for-all.png",
+                "logo_url": "https://images.unsplash.com/photo-1460317442991-0ec209397118?w=400&h=400&fit=crop",
             },
         ]
         for ngo_data in ngos:
