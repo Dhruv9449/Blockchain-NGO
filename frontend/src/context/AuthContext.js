@@ -6,17 +6,16 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    // Initialize user state from localStorage
     const savedUser = localStorage.getItem("user");
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
   const navigate = useNavigate();
 
-  // Update localStorage whenever user state changes
   useEffect(() => {
     if (user) {
       localStorage.setItem("user", JSON.stringify(user));
+      console.log("Updated user state:", user);
     } else {
       localStorage.removeItem("user");
     }
@@ -24,31 +23,32 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const result = await api.auth.login(username, password);
-      if (result.success) {
-        // Store user data including the token
-        const userData = {
-          username,
-          token: result.data.token, // Assuming your API returns a token
-        };
-        setUser(userData);
-        navigate("/");
-      }
-      return result;
-    } catch (error) {
-      return { success: false, error: "Network error" };
-    }
-  };
+      const response = await api.auth.login(username, password);
+      console.log("Login response:", response);
 
-  const register = async (username, password) => {
-    try {
-      const result = await api.auth.register(username, password);
-      if (result.success) {
-        await login(username, password);
+      if (response.success) {
+        const userData = {
+          username: response.data.username,
+          token: response.data.token,
+          isNGOAdmin: response.data.is_ngo_admin,
+          ngoId: response.data.ngo_id,
+        };
+
+        console.log("Saving user data:", userData);
+        localStorage.setItem("user", JSON.stringify(userData));
+        setUser(userData);
+
+        if (userData.isNGOAdmin) {
+          navigate("/ngo-admin");
+        } else {
+          navigate("/");
+        }
+        return { success: true };
       }
-      return result;
+      return response;
     } catch (error) {
-      return { success: false, error: "Network error" };
+      console.error("Login error:", error);
+      return { success: false, error: error.message };
     }
   };
 
@@ -58,20 +58,27 @@ export const AuthProvider = ({ children }) => {
     navigate("/login");
   };
 
+  const contextValue = {
+    user,
+    login,
+    logout,
+    isAuthenticated: Boolean(user),
+    isNGOAdmin: Boolean(user?.isNGOAdmin),
+    ngoId: user?.ngoId,
+    token: user?.token,
+  };
+
+  console.log("Auth context value:", contextValue);
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        register,
-        logout,
-        isAuthenticated: !!user,
-        token: user?.token,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};

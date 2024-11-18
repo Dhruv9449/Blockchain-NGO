@@ -104,3 +104,47 @@ class PaymentVerificationView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": "Payment verification failed: " + str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TransactionListView(APIView):
+    def get(self, request):
+        try:
+            # Get filter parameters
+            user_id = request.query_params.get("user_id")
+            min_amount = request.query_params.get("min_amount")
+            max_amount = request.query_params.get("max_amount")
+            sort_order = request.query_params.get("sort_order", "desc")  # Default to descending
+
+            # Start with all transactions
+            transactions = Transaction.objects.all()
+
+            # Apply filters
+            if user_id:
+                transactions = transactions.filter(user_id=user_id)
+            if min_amount:
+                transactions = transactions.filter(amount__gte=float(min_amount))
+            if max_amount:
+                transactions = transactions.filter(amount__lte=float(max_amount))
+
+            # Apply sorting
+            sort_field = "-timestamp" if sort_order == "desc" else "timestamp"
+            transactions = transactions.order_by(sort_field)
+
+            # Serialize the data
+            transaction_data = [
+                {
+                    "id": tx.id,
+                    "ngo": tx.ngo.name,
+                    "user": tx.user.username,
+                    "transaction_type": tx.transaction_type,
+                    "amount": tx.amount,
+                    "blockchain_hash": tx.blockchain_hash,
+                    "proof_url": tx.proof_url,
+                    "timestamp": tx.timestamp,
+                }
+                for tx in transactions
+            ]
+
+            return Response(transaction_data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

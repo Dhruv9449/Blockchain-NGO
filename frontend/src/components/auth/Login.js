@@ -16,11 +16,14 @@ function Login() {
 
     try {
       const result = await login(username, password);
-      if (!result.success) {
+      console.log("Login result:", result);
+
+      if (result && !result.success && result.error) {
         setError(result.error);
       }
     } catch (err) {
-      setError("Failed to login. Please try again.");
+      console.error("Login error:", err);
+      setError(err.message || "Failed to login. Please try again.");
     } finally {
       setLoading(false);
     }

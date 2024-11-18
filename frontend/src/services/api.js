@@ -37,10 +37,28 @@ const getHeaders = () => {
 };
 
 // Default fetch options with dynamic headers
-const getDefaultOptions = () => ({
-  credentials: "include",
-  headers: getHeaders(),
-});
+const getDefaultOptions = () => {
+  const headers = {
+    "Content-Type": "application/json",
+  };
+
+  // Get auth token from localStorage
+  const user = localStorage.getItem("user");
+  if (user) {
+    try {
+      const userData = JSON.parse(user);
+      if (userData && userData.token) {
+        headers["Authorization"] = `Token ${userData.token}`;
+      }
+    } catch (error) {
+      console.error("Error parsing user data:", error);
+    }
+  }
+
+  return {
+    headers: headers,
+  };
+};
 
 export const api = {
   auth: {
@@ -48,21 +66,25 @@ export const api = {
       try {
         const response = await fetch(`${API_BASE_URL}/users/login/`, {
           method: "POST",
-          ...getDefaultOptions(),
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({ username, password }),
         });
+
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.error || "Login failed");
+          return {
+            success: false,
+            error: data.error || "Login failed",
+          };
         }
 
-        return { success: true, data };
+        return data; // Should contain { success: true, data: {...} }
       } catch (error) {
-        return {
-          success: false,
-          error: error.message,
-        };
+        console.error("API login error:", error);
+        throw new Error("Network error");
       }
     },
 
@@ -124,9 +146,13 @@ export const api = {
     },
 
     getIncoming: async (ngoId) => {
+      const options = getDefaultOptions();
+
       const response = await fetch(`${API_BASE_URL}/ngos/${ngoId}/incoming/`, {
-        ...getDefaultOptions(),
+        method: "GET",
+        ...options,
       });
+
       if (!response.ok) {
         throw new Error("Failed to fetch incoming transactions");
       }
@@ -134,17 +160,75 @@ export const api = {
     },
 
     addOutgoing: async (ngoId, amount, proofUrl) => {
+      const options = getDefaultOptions();
+
       const response = await fetch(`${API_BASE_URL}/ngos/${ngoId}/outgoing/`, {
         method: "POST",
-        ...getDefaultOptions(),
+        ...options,
         body: JSON.stringify({
           amount,
           proof_url: proofUrl,
         }),
       });
+
       if (!response.ok) {
         throw new Error("Failed to add outgoing transaction");
       }
+      return response.json();
+    },
+
+    getAdminNGO: async () => {
+      try {
+        const userData = localStorage.getItem("user");
+        if (!userData) {
+          throw new Error("No user data found");
+        }
+
+        const { token } = JSON.parse(userData);
+        if (!token) {
+          throw new Error("No token found");
+        }
+
+        console.log("Making request with token:", token); // Debug log
+
+        const response = await fetch(`${API_BASE_URL}/ngos/admin/ngo/`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Token ${token}`, // Make sure there's a space after "Token"
+          },
+          credentials: "include", // Include credentials in the request
+        });
+
+        console.log("Response status:", response.status); // Debug log
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Error response:", errorData);
+          throw new Error(errorData.detail || "Failed to fetch NGO details");
+        }
+
+        return response.json();
+      } catch (error) {
+        console.error("API call error:", error);
+        throw error;
+      }
+    },
+
+    updateNGO: async (ngoId, data) => {
+      const options = getDefaultOptions();
+
+      const response = await fetch(`${API_BASE_URL}/ngos/admin/ngo/${ngoId}/`, {
+        method: "PUT",
+        ...options,
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update NGO");
+      }
+
       return response.json();
     },
   },
@@ -191,6 +275,20 @@ export const api = {
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || "Failed to verify payment");
+      }
+      return response.json();
+    },
+
+    list: async (queryString = "") => {
+      const response = await fetch(
+        `${API_BASE_URL}/transactions/list/?${queryString}`,
+        {
+          ...getDefaultOptions(),
+        }
+      );
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to fetch transactions");
       }
       return response.json();
     },

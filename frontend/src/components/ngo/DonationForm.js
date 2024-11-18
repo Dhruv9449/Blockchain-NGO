@@ -85,7 +85,7 @@ function DonationForm({ ngoId, onDonationSuccess }) {
 
   return (
     <div className="bg-gray-50 p-6 rounded-lg shadow-sm">
-      <h2 className="text-2xl font-bold mb-4">Make a Donation</h2>
+      {/* <h2 className="text-2xl font-bold mb-4">Make a Donation</h2> */}
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {error}
