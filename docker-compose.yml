@@ -17,6 +17,7 @@ services:
     ports:
       - "8000:8000"
     depends_on:
+      - db
       - ganache
 
   ganache:
@@ -47,7 +48,6 @@ services:
     command: npm start
     volumes:
       - ./frontend:/app
-      - /app/node_modules
     ports:
       - "3000:3000"
     environment:
