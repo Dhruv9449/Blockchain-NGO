@@ -159,6 +159,16 @@ export const api = {
       return response.json();
     },
 
+    getOutgoing: async (ngoId) => {
+      const response = await fetch(`${API_BASE_URL}/ngos/${ngoId}/outgoing/`, {
+        ...getDefaultOptions(),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch outgoing transactions");
+      }
+      return response.json();
+    },
+
     addOutgoing: async (ngoId, amount, proofUrl) => {
       const options = getDefaultOptions();
 
@@ -289,6 +299,26 @@ export const api = {
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || "Failed to fetch transactions");
+      }
+      return response.json();
+    },
+
+    getIncomingTransactions: async (ngoId) => {
+      const response = await fetch(`${API_BASE_URL}/ngos/${ngoId}/incoming/`, {
+        ...getDefaultOptions(),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch incoming transactions");
+      }
+      return response.json();
+    },
+
+    getOutgoingTransactions: async (ngoId) => {
+      const response = await fetch(`${API_BASE_URL}/ngos/${ngoId}/outgoing/`, {
+        ...getDefaultOptions(),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch outgoing transactions");
       }
       return response.json();
     },
