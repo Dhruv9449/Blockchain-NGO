@@ -5,9 +5,12 @@ from rest_framework.response import Response
 from django.contrib.auth.models import User
 from ngos.models import NGO
 from rest_framework.authtoken.models import Token
+from rest_framework.permissions import AllowAny
 
 
 class RegisterUserView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         username = request.data.get("username")
         password = request.data.get("password")
@@ -17,6 +20,8 @@ class RegisterUserView(APIView):
 
 
 class LoginUserView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         username = request.data.get("username")
         password = request.data.get("password")

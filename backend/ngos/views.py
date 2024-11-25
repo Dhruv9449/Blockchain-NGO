@@ -6,9 +6,12 @@ from .utils import create_blockchain_record
 from transactions.models import Transaction
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import AllowAny
 
 
 class ListNGOsView(APIView):
+    permission_classes = [AllowAny]
+
     def get(self, request):
         ngos = NGO.objects.all()
         ngos_data = [{"id": ngo.id, "name": ngo.name, "logo_url": ngo.logo_url} for ngo in ngos]
@@ -84,6 +87,20 @@ class DonateToNGOView(APIView):
 
 
 class OutgoingTransactionView(APIView):
+    def get(self, request, ngo_id):
+        outgoing = Transaction.objects.filter(ngo_id=ngo_id, transaction_type="expense")
+        outgoing_data = [
+            {
+                "amount": tx.amount,
+                "proof_url": tx.proof_url,
+                "blockchain_hash": tx.blockchain_hash,
+                "timestamp": tx.timestamp,
+                "description": tx.description,
+            }
+            for tx in outgoing
+        ]
+        return Response(outgoing_data, status=status.HTTP_200_OK)
+
     def post(self, request, ngo_id):
         ngo = NGO.objects.get(id=ngo_id)
         amount = request.data.get("amount")
@@ -113,7 +130,13 @@ class IncomingTransactionView(APIView):
     def get(self, request, ngo_id):
         incoming = Transaction.objects.filter(ngo_id=ngo_id, transaction_type="donation")
         incoming_data = [
-            {"amount": tx.amount, "user": tx.user.username, "blockchain_hash": tx.blockchain_hash} for tx in incoming
+            {
+                "amount": tx.amount,
+                "user": tx.user.username,
+                "blockchain_hash": tx.blockchain_hash,
+                "timestamp": tx.timestamp,
+            }
+            for tx in incoming
         ]
         return Response(incoming_data, status=status.HTTP_200_OK)
 
@@ -138,7 +161,7 @@ class NGOAdminView(APIView):
             )
             print("========================")
 
-            ngo = NGO.objects.get(admin=request.user)
+            ngo = NGO.objects.filter(admin=request.user).first()
             ngo_data = {
                 "id": ngo.id,
                 "name": ngo.name,
