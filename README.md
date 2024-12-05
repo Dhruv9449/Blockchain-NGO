@@ -57,13 +57,13 @@ BlockchainNGO offers a comprehensive platform for transparent charitable giving:
 ### Images
 
 <p float="center">
-  <img src="./assets/home.png" width="500" />
-  <img src="./assets/ngo_page.png" width="500" /> 
-  <img src="./assets/payment.png" width="500" />
-  <img src="./assets/dashboard.png" width="500" />
-  <img src="./assets/transaction_list.png" width="500" />
-  <img src="./assets/add_expense.png" width="500" />
-  <img src="./assets/update_ngo.png" width="500" />
+  <img src="./assets/home.png" width="350" />
+  <img src="./assets/ngo_page.png" width="350" /> 
+  <img src="./assets/payment.png" width="350" />
+  <img src="./assets/dashboard.png" width="350" />
+  <img src="./assets/transaction_list.png" width="350" />
+  <img src="./assets/add_expense.png" width="350" />
+  <img src="./assets/update_ngo.png" width="350" />
 </p>
 
 ## Tech Stack
@@ -153,7 +153,7 @@ docker-compose run backend python manage.py createsuperuser
 ## Accessing the Platform
 
 Access the applications:
-- Frontend: http://localhost:3000
+- Frontend: http://localhost:3500
 - Backend API: http://localhost:8000
 - Admin Interface: http://localhost:8000/admin
 
@@ -181,9 +181,9 @@ The platform follows a microservices architecture:
 ### Diagrams
 
 <p float="center">
-  <img src="./assets/usecase_diagram.png" width="500" />
-  <img src="./assets/block_diagram.png" width="500" />
-  <img src="./assets/sequence_diagram.png" width="500" />
+  <img src="./assets/usecase_diagram.png" width="350" />
+  <img src="./assets/block_diagram.png" width="350" />
+  <img src="./assets/sequence_diagram.png" width="350" />
 
 <br>
 
