@@ -181,10 +181,9 @@ The platform follows a microservices architecture:
 ### Diagrams
 
 <p float="center">
-  <img src="./assets/usecase_diagram.png" width="350" />
   <img src="./assets/block_diagram.png" width="350" />
   <img src="./assets/sequence_diagram.png" width="350" />
-
+  <img src="./assets/usecase_diagram.png" width="350" />
 <br>
 
 ## API Documentation
