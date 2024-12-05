@@ -58,10 +58,42 @@ export const AuthProvider = ({ children }) => {
     navigate("/login");
   };
 
+  const register = async (username, password) => {
+    try {
+      const response = await api.auth.register(username, password);
+      console.log("Register response:", response);
+
+      if (response.success) {
+        const userData = {
+          username: response.data.username,
+          token: response.data.token,
+          isNGOAdmin: response.data.is_ngo_admin,
+          ngoId: response.data.ngo_id,
+        };
+
+        console.log("Saving user data:", userData);
+        localStorage.setItem("user", JSON.stringify(userData));
+        setUser(userData);
+
+        if (userData.isNGOAdmin) {
+          navigate("/ngo-admin");
+        } else {
+          navigate("/");
+        }
+        return { success: true };
+      }
+      return response;
+    } catch (error) {
+      console.error("Register error:", error);
+      return { success: false, error: error.message };
+    }
+  };
+
   const contextValue = {
     user,
     login,
     logout,
+    register,
     isAuthenticated: Boolean(user),
     isNGOAdmin: Boolean(user?.isNGOAdmin),
     ngoId: user?.ngoId,
