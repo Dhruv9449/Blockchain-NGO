@@ -105,6 +105,7 @@ class OutgoingTransactionView(APIView):
         ngo = NGO.objects.get(id=ngo_id)
         amount = request.data.get("amount")
         proof_url = request.data.get("proof_url")
+        description = request.data.get("description")
 
         # Create expense on blockchain
         transaction_hash = create_blockchain_record(amount, "expense", ngo.id)
@@ -117,6 +118,7 @@ class OutgoingTransactionView(APIView):
                 amount=amount,
                 blockchain_hash=transaction_hash,
                 proof_url=proof_url,
+                description=description,
                 user=request.user,  # Assuming user is authenticated
             )
             return Response({"transaction_hash": transaction_hash}, status=status.HTTP_201_CREATED)

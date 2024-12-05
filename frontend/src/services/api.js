@@ -123,13 +123,27 @@ export const api = {
     },
 
     getDetail: async (ngoId) => {
-      const response = await fetch(`${API_BASE_URL}/ngos/${ngoId}/`, {
-        ...getDefaultOptions(),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch NGO details");
+      try {
+        const response = await fetch(`${API_BASE_URL}/ngos/${ngoId}/`, {
+          ...getDefaultOptions(),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch NGO details");
+        }
+
+        const data = await response.json();
+        console.log("API Response:", data); // Add this debug log
+
+        // Ensure work_images is always an array
+        return {
+          ...data,
+          work_images: data.work_images || [],
+        };
+      } catch (error) {
+        console.error("API Error:", error);
+        throw error;
       }
-      return response.json();
     },
 
     donate: async (ngoId, amount) => {
@@ -169,7 +183,7 @@ export const api = {
       return response.json();
     },
 
-    addOutgoing: async (ngoId, amount, proofUrl) => {
+    addOutgoing: async (ngoId, amount, proofUrl, description) => {
       const options = getDefaultOptions();
 
       const response = await fetch(`${API_BASE_URL}/ngos/${ngoId}/outgoing/`, {
@@ -178,11 +192,15 @@ export const api = {
         body: JSON.stringify({
           amount,
           proof_url: proofUrl,
+          description,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to add outgoing transaction");
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || "Failed to add outgoing transaction"
+        );
       }
       return response.json();
     },

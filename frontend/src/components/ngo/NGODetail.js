@@ -2,6 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../services/api";
 import DonationForm from "./DonationForm";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import ImageModal from "../common/ImageModal";
 
 function NGODetail() {
   const { id } = useParams();
@@ -20,14 +24,17 @@ function NGODetail() {
     sort_order: "desc",
   });
   const [showDonationForm, setShowDonationForm] = useState(false);
+  const [modalImage, setModalImage] = useState(null);
 
   const fetchNGODetails = useCallback(async () => {
     try {
       setLoading(true);
       const data = await api.ngos.getDetail(id);
+      console.log("NGO Data received:", data);
       setNgo(data);
       setError(null);
     } catch (err) {
+      console.error("Error fetching NGO details:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -111,23 +118,64 @@ function NGODetail() {
           </div>
         </div>
 
-        {/* Work Images Gallery */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Our Work</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {ngo?.work_images?.map((imageUrl, index) => (
-              <div
-                key={index}
-                className="relative aspect-w-16 aspect-h-9 rounded-lg overflow-hidden"
-              >
-                <img
-                  src={imageUrl}
-                  alt={`NGO work ${index + 1}`}
-                  className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-200"
-                  onClick={() => window.open(imageUrl, "_blank")}
-                />
-              </div>
-            ))}
+        {/* Work Images Carousel */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Our Work</h2>
+          <div className="relative">
+            <Slider
+              dots={true}
+              infinite={true}
+              speed={500}
+              slidesToShow={3}
+              slidesToScroll={3}
+              autoplay={true}
+              autoplaySpeed={4000}
+              pauseOnHover={true}
+              prevArrow={<CustomArrow direction="prev" />}
+              nextArrow={<CustomArrow direction="next" />}
+              className="work-images-carousel"
+              responsive={[
+                {
+                  breakpoint: 1024,
+                  settings: {
+                    slidesToShow: 2,
+                    slidesToScroll: 2,
+                  },
+                },
+                {
+                  breakpoint: 640,
+                  settings: {
+                    slidesToShow: 1,
+                    slidesToScroll: 1,
+                  },
+                },
+              ]}
+            >
+              {ngo?.work_images?.map((imageUrl, index) => (
+                <div key={index} className="px-2">
+                  <div
+                    className="relative h-48 rounded-lg overflow-hidden shadow-md group cursor-pointer"
+                    onClick={() =>
+                      setModalImage({
+                        url: imageUrl,
+                        title: `${ngo.name} Work Image ${index + 1}`,
+                      })
+                    }
+                  >
+                    <img
+                      src={imageUrl}
+                      alt={`${ngo?.name || "NGO"} work ${index + 1}`}
+                      className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="absolute bottom-2 left-2 right-2 text-white text-center">
+                        <p className="text-xs">Click to view full image</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </Slider>
           </div>
         </div>
 
@@ -158,10 +206,14 @@ function NGODetail() {
         {/* Certificate */}
         <div className="mb-6 p-4 bg-gray-50 rounded-lg">
           <a
-            href={ngo.certificate_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-indigo-600 hover:text-indigo-800 flex items-center gap-2"
+            onClick={(e) => {
+              e.preventDefault();
+              setModalImage({
+                url: ngo.certificate_url,
+                title: "NGO Certificate",
+              });
+            }}
+            className="text-indigo-600 hover:text-indigo-800 flex items-center gap-2 cursor-pointer"
           >
             <svg
               className="w-5 h-5"
@@ -386,7 +438,10 @@ function NGODetail() {
                                 alt="Expense proof"
                                 className="w-24 h-24 object-cover rounded-lg cursor-pointer hover:opacity-75"
                                 onClick={() =>
-                                  window.open(tx.proof_url, "_blank")
+                                  setModalImage({
+                                    url: tx.proof_url,
+                                    title: "Expense Proof",
+                                  })
                                 }
                               />
                             </div>
@@ -400,8 +455,67 @@ function NGODetail() {
           </div>
         </div>
       </div>
+      <ImageModal
+        isOpen={!!modalImage}
+        onClose={() => setModalImage(null)}
+        imageUrl={modalImage?.url}
+        title={modalImage?.title}
+      />
     </div>
   );
 }
+
+// Add this custom arrow component
+const CustomArrow = ({ direction, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`absolute z-10 top-1/2 transform -translate-y-1/2 
+                ${direction === "prev" ? "-left-4" : "-right-4"}
+                bg-white hover:bg-gray-100 text-gray-800 
+                w-8 h-8 rounded-full shadow-lg
+                flex items-center justify-center
+                transition-all duration-200 hover:scale-110
+                border border-gray-200`}
+  >
+    {direction === "prev" ? "←" : "→"}
+  </button>
+);
+
+// Add these styles to your CSS or in a style tag
+const styles = `
+  .work-images-carousel .slick-slide {
+    padding: 0 8px;
+  }
+
+  .work-images-carousel .slick-dots {
+    bottom: -30px;
+  }
+
+  .work-images-carousel .slick-dots li button:before {
+    font-size: 8px;
+    color: #4f46e5;
+  }
+
+  .work-images-carousel .slick-dots li.slick-active button:before {
+    color: #4f46e5;
+  }
+
+  .work-images-carousel {
+    margin: 0 -8px;
+    margin-bottom: 40px;
+  }
+
+  .work-images-carousel .slick-track {
+    display: flex;
+    align-items: center;
+  }
+
+  .work-images-carousel .slick-slide {
+    height: inherit;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+`;
 
 export default NGODetail;

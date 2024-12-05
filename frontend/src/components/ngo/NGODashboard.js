@@ -16,6 +16,7 @@ import {
 import { useDropzone } from "react-dropzone"; // npm install react-dropzone
 import { uploadToImgur } from "../../services/imgur";
 import { ImageUploader } from "../common/ImageUploader";
+import ImageModal from "../common/ImageModal";
 
 // Register ChartJS components
 ChartJS.register(
@@ -52,6 +53,7 @@ function NGODashboard() {
   });
   const [newImageUrl, setNewImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [modalImage, setModalImage] = useState(null);
 
   // Define fetchData function
   const fetchData = async () => {
@@ -224,7 +226,8 @@ function NGODashboard() {
       await api.ngos.addOutgoing(
         ngo.id,
         parseFloat(newExpense.amount),
-        newExpense.proof_url
+        newExpense.proof_url,
+        newExpense.description
       );
       setNewExpense({ amount: "", description: "", proof_url: "" });
       await fetchData(); // Refresh data after adding expense
@@ -679,14 +682,17 @@ function NGODashboard() {
                                 {transaction.description}
                               </p>
                               {transaction.proof_url && (
-                                <a
-                                  href={transaction.proof_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                                <button
+                                  onClick={() =>
+                                    setModalImage({
+                                      url: transaction.proof_url,
+                                      title: `Expense Proof - ₹${transaction.amount.toLocaleString()}`,
+                                    })
+                                  }
                                   className="text-indigo-600 hover:text-indigo-800 text-xs mt-1 inline-block"
                                 >
                                   View Proof
-                                </a>
+                                </button>
                               )}
                             </div>
                           )}
@@ -763,11 +769,19 @@ function NGODashboard() {
                       placeholder="Enter proof image URL"
                     />
                     {newExpense.proof_url && (
-                      <div className="flex justify-center bg-gray-50 p-4 rounded-lg">
+                      <div
+                        className="flex justify-center bg-gray-50 p-4 rounded-lg cursor-pointer"
+                        onClick={() =>
+                          setModalImage({
+                            url: newExpense.proof_url,
+                            title: "New Expense Proof Preview",
+                          })
+                        }
+                      >
                         <img
                           src={newExpense.proof_url}
                           alt="Expense proof"
-                          className="h-48 object-contain rounded-lg"
+                          className="h-48 object-contain rounded-lg hover:opacity-90 transition-opacity"
                           onError={(e) => {
                             e.target.src = "/placeholder-image.png";
                           }}
@@ -795,11 +809,19 @@ function NGODashboard() {
                     className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
                   >
                     {expense.proof_url && (
-                      <div className="aspect-w-16 aspect-h-9">
+                      <div
+                        className="aspect-w-16 aspect-h-9 cursor-pointer"
+                        onClick={() =>
+                          setModalImage({
+                            url: expense.proof_url,
+                            title: `Expense Proof - ₹${expense.amount.toLocaleString()}`,
+                          })
+                        }
+                      >
                         <img
                           src={expense.proof_url}
                           alt="Expense proof"
-                          className="object-cover w-full h-full"
+                          className="object-cover w-full h-full hover:opacity-90 transition-opacity"
                           onError={(e) => {
                             e.target.src = "/placeholder-image.png";
                             e.target.className = "object-contain p-4";
@@ -985,7 +1007,7 @@ function NGODashboard() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Certificate URL
                     </label>
-                    <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="mt-1 relative rounded-md shadow-sm flex">
                       <input
                         type="url"
                         value={ngo.certificate_url}
@@ -995,25 +1017,29 @@ function NGODashboard() {
                             certificate_url: e.target.value,
                           }))
                         }
-                        className="block w-full px-4 py-3 rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="block w-full px-4 py-3 rounded-l-lg border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
                         required
                       />
                       {ngo.certificate_url && (
-                        <a
-                          href={ngo.certificate_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-indigo-600 hover:text-indigo-800"
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setModalImage({
+                              url: ngo.certificate_url,
+                              title: `${ngo.name} - NGO Certificate`,
+                            })
+                          }
+                          className="inline-flex items-center px-3 rounded-r-lg border border-l-0 border-gray-300 bg-gray-50 hover:bg-gray-100 transition-colors"
                         >
                           <svg
-                            className="h-5 w-5"
+                            className="h-5 w-5 text-indigo-600 hover:text-indigo-800"
                             fill="currentColor"
                             viewBox="0 0 20 20"
                           >
                             <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
                             <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
                           </svg>
-                        </a>
+                        </button>
                       )}
                     </div>
                   </div>
@@ -1033,6 +1059,14 @@ function NGODashboard() {
           </div>
         )}
       </div>
+
+      {/* Image Modal */}
+      <ImageModal
+        isOpen={!!modalImage}
+        onClose={() => setModalImage(null)}
+        imageUrl={modalImage?.url}
+        title={modalImage?.title}
+      />
     </div>
   );
 }
